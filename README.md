@@ -31,6 +31,8 @@ Copy `myos.elf` file to the sd-card and use `u-boot` to load and run it.
 
 `go 0x42000000`
 
+Then connect the device using serial UART console with 115200 8N1 (no hardware flow control!) settings.
+
 ## Currently implemented
 
 - Basic register support (UART initialization)
