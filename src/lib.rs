@@ -14,14 +14,14 @@ use core::panic::PanicInfo;
 
 extern crate alloc;
 use alloc::format;
-use alloc::string::String;
-use system::allocator::{get_free_bytes, init_heap};
+use system::allocator::init_heap;
 use system::{
     ports::{init_gpio, PortRegister, PORTA},
-    uart::{getc, uart0_init, write, writec},
+    uart::{uart0_init, write},
 };
 
-use crate::system::rtc::{get_hours, get_minutes, get_seconds, wait_for_rtc_init};
+use crate::system::kernel_shell::KernelShell;
+use crate::system::rtc::wait_for_rtc_init;
 
 #[no_mangle]
 #[allow(unused_must_use)]
@@ -41,47 +41,8 @@ pub extern "C" fn kernel_main() -> u32 {
     write!(&mut uart, "done.\n\r");
     port_a.set_pin_output(10, false);
     write!(&mut uart, "Enter 'q' to quit\n\r");
-    let mut inp: u8 = 0;
-    let mut buffer = String::new();
-    buffer.reserve_exact(10);
-    loop {
-        write!(&mut uart, "> ");
-        while inp != 13 {
-            // Carriage return
-            inp = getc();
-            writec(inp);
-            buffer.push(inp as char);
-        }
-        match buffer.trim() {
-            "q" => return 0,
-            "free" => {
-                let fb = get_free_bytes().unwrap_or(0);
-                write!(&mut uart, "Free memory: {} bytes\n\r", fb);
-            }
-            "time" => {
-                write!(
-                    &mut uart,
-                    "Time: {:02}:{:02}:{:02}\n\r",
-                    get_hours(),
-                    get_minutes(),
-                    get_seconds()
-                );
-            }
-            "on" => {
-                port_a.set_pin_output(10, true);
-                write!(&mut uart, "Led on\n\r");
-            }
-            "off" => {
-                port_a.set_pin_output(10, false);
-                write!(&mut uart, "Led off\n\r");
-            }
-            cmd => {
-                write!(&mut uart, "Unknown command: `{}`\n\r", cmd);
-            }
-        }
-        inp = 0;
-        buffer.clear();
-    }
+    let mut shell = KernelShell::new(uart, port_a);
+    shell.run()
 }
 
 // #[no_mangle]
