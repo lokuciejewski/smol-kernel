@@ -17,7 +17,7 @@ SECTIONS
   __heap_start = .;
   .heap (NOLOAD) :
   {
-    . += 32 * 1024 * 1024;
+    . += 64 * 1024 * 1024;
   }
   __heap_end_exclusive = .;
 
