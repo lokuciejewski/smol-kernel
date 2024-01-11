@@ -9,7 +9,7 @@ use crate::system::{
     uart::{getc, writec},
 };
 
-use super::{ports::PortRegister, uart::UART0};
+use super::{ports::PortRegister, sd_mmc::SDCard, uart::UART0};
 
 type Args<'a> = Vec<&'a str>;
 type Command = (&'static str, fn(&mut KernelShell, &Args) -> ShellReturnCode);
@@ -24,14 +24,16 @@ pub struct KernelShell {
     available_commands: Vec<Command>,
     uart: UART0,
     port_a: PortRegister,
+    sd_mmc: SDCard,
 }
 
 impl KernelShell {
-    pub fn new(uart: UART0, port_a: PortRegister) -> Self {
+    pub fn new(uart: UART0, port_a: PortRegister, sd_mmc: SDCard) -> Self {
         let mut ks = KernelShell {
             available_commands: Vec::new(),
             uart,
             port_a,
+            sd_mmc,
         };
         ks.available_commands.reserve_exact(1024);
         ks.available_commands.push(("q", KernelShell::shell_exit));
@@ -43,6 +45,8 @@ impl KernelShell {
         ks.available_commands.push(("off", KernelShell::led_off));
         ks.available_commands
             .push(("alloc", KernelShell::test_allocate_mem));
+        ks.available_commands
+            .push(("sd_status", KernelShell::get_sd_status));
         ks
     }
 
@@ -123,6 +127,12 @@ impl KernelShell {
             Ok(_) => ShellReturnCode::Ok,
             Err(_) => ShellReturnCode::Err,
         }
+    }
+
+    fn get_sd_status(&mut self, _: &Args) -> ShellReturnCode {
+        let sd_status = self.sd_mmc.get_status();
+        write!(&mut self.uart, "SD Card status: 0b{:032b}\n\r", sd_status).unwrap();
+        ShellReturnCode::Ok
     }
 
     fn test_allocate_mem(&mut self, args: &Args) -> ShellReturnCode {

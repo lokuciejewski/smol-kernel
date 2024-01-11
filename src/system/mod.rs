@@ -4,4 +4,5 @@ pub mod kernel_shell;
 pub mod ports;
 pub mod rtc;
 pub mod rw;
+pub mod sd_mmc;
 pub mod uart;

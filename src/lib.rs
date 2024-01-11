@@ -22,6 +22,7 @@ use system::{
 
 use crate::system::kernel_shell::KernelShell;
 use crate::system::rtc::wait_for_rtc_init;
+use crate::system::sd_mmc::SDCard;
 
 #[no_mangle]
 #[allow(unused_must_use)]
@@ -41,7 +42,8 @@ pub extern "C" fn kernel_main() -> u32 {
     write!(&mut uart, "done.\n\r");
     port_a.set_pin_output(10, false);
     write!(&mut uart, "Enter 'q' to quit\n\r");
-    let mut shell = KernelShell::new(uart, port_a);
+    let sd_mmc = SDCard {};
+    let mut shell = KernelShell::new(uart, port_a, sd_mmc);
     shell.run()
 }
 
